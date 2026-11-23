@@ -57,6 +57,8 @@ enum
     MENU_ACTION_POKEDEX,
     MENU_ACTION_POKEMON,
     MENU_ACTION_BAG,
+    MENU_ACTION_PC,
+    MENU_ACTION_IVEV,
     MENU_ACTION_POKENAV,
     MENU_ACTION_PLAYER,
     MENU_ACTION_SAVE,
@@ -138,6 +140,10 @@ static u8 BattlePyramidConfirmRetireCallback(void);
 static u8 BattlePyramidRetireYesNoCallback(void);
 static u8 BattlePyramidRetireInputCallback(void);
 
+static u8 sStartMenuPage;
+static bool8 sStartMenuNormal;
+static void BuildStartMenuActions(void);
+
 // Task callbacks
 static void StartMenuTask(u8 taskId);
 static void SaveGameTask(u8 taskId);
@@ -189,11 +195,19 @@ static const struct WindowTemplate sWindowTemplate_PyramidPeak = {
 
 static const u8 sText_MenuDebug[] = _("DEBUG");
 
+extern const u8 EventScript_StartMenuPC[];
+extern const u8 EventScript_StartMenuIvEv[];
+
+static bool8 StartMenuPcCallback(void);
+static bool8 StartMenuIvEvCallback(void);
+
 static const struct MenuAction sStartMenuItems[] =
 {
     [MENU_ACTION_POKEDEX]         = {gText_MenuPokedex, {.u8_void = StartMenuPokedexCallback}},
     [MENU_ACTION_POKEMON]         = {gText_MenuPokemon, {.u8_void = StartMenuPokemonCallback}},
     [MENU_ACTION_BAG]             = {gText_MenuBag,     {.u8_void = StartMenuBagCallback}},
+    [MENU_ACTION_PC] = {COMPOUND_STRING("PC"), {.u8_void = StartMenuPcCallback}},
+    [MENU_ACTION_IVEV] = {COMPOUND_STRING("IV/EV"), {.u8_void = StartMenuIvEvCallback}},
     [MENU_ACTION_POKENAV]         = {gText_MenuPokenav, {.u8_void = StartMenuPokeNavCallback}},
     [MENU_ACTION_PLAYER]          = {gText_MenuPlayer,  {.u8_void = StartMenuPlayerNameCallback}},
     [MENU_ACTION_SAVE]            = {gText_MenuSave,    {.u8_void = StartMenuSaveCallback}},
@@ -283,6 +297,7 @@ static void HideStartMenuDebug(void);
 static void BuildStartMenuActions(void)
 {
     sNumStartMenuActions = 0;
+    sStartMenuNormal = FALSE;
 
     if (IsOverworldLinkActive() == TRUE)
     {
@@ -324,16 +339,23 @@ static void AddStartMenuAction(u8 action)
 
 static void BuildNormalStartMenu(void)
 {
+    sStartMenuNormal = TRUE;
+    if (sStartMenuPage == 1)
+    {
+        FlagSet(DN_FLAG_DEXNAV_GET);
+        AddStartMenuAction(MENU_ACTION_DEXNAV);
+        AddStartMenuAction(MENU_ACTION_EXIT);
+        return;
+    }
     if (FlagGet(FLAG_SYS_POKEDEX_GET) == TRUE)
         AddStartMenuAction(MENU_ACTION_POKEDEX);
-
-    if (DN_FLAG_DEXNAV_GET != 0 && FlagGet(DN_FLAG_DEXNAV_GET))
-        AddStartMenuAction(MENU_ACTION_DEXNAV);
 
     if (FlagGet(FLAG_SYS_POKEMON_GET) == TRUE)
         AddStartMenuAction(MENU_ACTION_POKEMON);
 
     AddStartMenuAction(MENU_ACTION_BAG);
+    AddStartMenuAction(MENU_ACTION_PC);
+    AddStartMenuAction(MENU_ACTION_IVEV);
 
     if (FlagGet(FLAG_SYS_POKENAV_GET) == TRUE)
         AddStartMenuAction(MENU_ACTION_POKENAV);
@@ -341,7 +363,6 @@ static void BuildNormalStartMenu(void)
     AddStartMenuAction(MENU_ACTION_PLAYER);
     AddStartMenuAction(MENU_ACTION_SAVE);
     AddStartMenuAction(MENU_ACTION_OPTION);
-    AddStartMenuAction(MENU_ACTION_EXIT);
 }
 
 static void BuildDebugStartMenu(void)
@@ -552,6 +573,7 @@ static bool32 InitStartMenuStep(void)
 
 static void InitStartMenu(void)
 {
+    sStartMenuPage = 0;
     sInitStartMenuData[0] = 0;
     sInitStartMenuData[1] = 0;
     while (!InitStartMenuStep())
@@ -626,6 +648,21 @@ void ShowStartMenu(void)
 
 static bool8 HandleStartMenuInput(void)
 {
+    if (JOY_NEW(R_BUTTON) && sStartMenuNormal)
+    {
+        s8 idx = 0;
+        PlaySE(SE_SELECT);
+        sStartMenuPage ^= 1;
+        RemoveStartMenuWindow();
+        BuildStartMenuActions();
+        LoadMessageBoxAndBorderGfx();
+        DrawStdWindowFrame(AddStartMenuWindow(sNumStartMenuActions), FALSE);
+        PrintStartMenuActions(&idx, sNumStartMenuActions);
+        sStartMenuCursorPos = InitMenuNormal(GetStartMenuWindowId(),
+            FONT_NORMAL, 0, 9, 16, sNumStartMenuActions, 0);
+        CopyWindowToVram(GetStartMenuWindowId(), COPYWIN_MAP);
+        return FALSE;
+    }
     if (JOY_NEW(DPAD_UP))
     {
         PlaySE(SE_SELECT);
@@ -655,6 +692,7 @@ static bool8 HandleStartMenuInput(void)
         if (gMenuCallback != StartMenuSaveCallback
             && gMenuCallback != StartMenuExitCallback
             && gMenuCallback != StartMenuDebugCallback
+        && gMenuCallback != StartMenuPcCallback
             && gMenuCallback != StartMenuSafariZoneRetireCallback
             && gMenuCallback != StartMenuBattlePyramidRetireCallback)
         {
@@ -1510,4 +1548,20 @@ void Script_ForceSaveGame(struct ScriptContext *ctx)
     ShowSaveInfoWindow();
     gMenuCallback = SaveCallback;
     sSaveDialogCallback = SaveSavingMessageCallback;
+}
+
+static bool8 StartMenuPcCallback(void)
+{
+    RemoveExtraStartMenuWindows();
+    HideStartMenu();
+    ScriptContext_SetupScript(EventScript_StartMenuPC);
+    return TRUE;
+}
+
+static bool8 StartMenuIvEvCallback(void)
+{
+    RemoveExtraStartMenuWindows();
+    HideStartMenu();
+    ScriptContext_SetupScript(EventScript_StartMenuIvEv);
+    return TRUE;
 }
