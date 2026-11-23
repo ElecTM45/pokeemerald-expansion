@@ -12,6 +12,7 @@
 #include "pokemon.h"
 #include "sprite.h"
 #include "util.h"
+#include "event_data.h"
 #include "test_runner.h"
 
 #include "data/gimmicks.h"
@@ -24,11 +25,23 @@ void AssignUsableGimmicks(void)
         gBattleStruct->gimmick.usableGimmick[battler] = GIMMICK_NONE;
         for (enum Gimmick gimmick = 0; gimmick < GIMMICKS_COUNT; ++gimmick)
         {
+            if (gimmick == GIMMICK_TERA || gimmick == GIMMICK_DYNAMAX)
+                continue;
             if (CanActivateGimmick(battler, gimmick))
             {
                 gBattleStruct->gimmick.usableGimmick[battler] = gimmick;
                 break;
             }
+        }
+        if (gBattleStruct->gimmick.usableGimmick[battler] == GIMMICK_NONE)
+        {
+            if ((FlagGet(FLAG_UNUSED_0x020) || (gBattleMons[battler].item >= ITEM_BUG_TERA_SHARD && gBattleMons[battler].item <= ITEM_WATER_TERA_SHARD))
+             && CanActivateGimmick(battler, GIMMICK_TERA))
+                gBattleStruct->gimmick.usableGimmick[battler] = GIMMICK_TERA;
+            else if (CanActivateGimmick(battler, GIMMICK_DYNAMAX))
+                gBattleStruct->gimmick.usableGimmick[battler] = GIMMICK_DYNAMAX;
+            else if (CanActivateGimmick(battler, GIMMICK_TERA))
+                gBattleStruct->gimmick.usableGimmick[battler] = GIMMICK_TERA;
         }
     }
 }

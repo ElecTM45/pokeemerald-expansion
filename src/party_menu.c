@@ -2947,6 +2947,7 @@ static void SetPartyMonSelectionActions(struct Pokemon *mons, u8 slotId, u8 acti
     }
 }
 
+static bool8 CanUseFieldMoveWithoutKnowing(struct Pokemon *mon, enum Move move);
 static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
 {
     u8 i, j;
@@ -2968,6 +2969,23 @@ static void SetPartyMonFieldSelectionActions(struct Pokemon *mons, u8 slotId)
                 break;
             }
         }
+    }
+
+    // Offer Fly if the Pokemon can learn it, even if it doesn't know it
+    for (j = 0; j != FIELD_MOVES_COUNT; j++)
+    {
+        if (FieldMove_GetMoveId(j) != MOVE_FLY || !FieldMove_IsVisible(j))
+            continue;
+        if (!CanUseFieldMoveWithoutKnowing(&mons[slotId], MOVE_FLY))
+            break;
+        for (i = 0; i < sPartyMenuInternal->numActions; i++)
+        {
+            if (sPartyMenuInternal->actions[i] == j + MENU_FIELD_MOVES)
+                break;
+        }
+        if (i == sPartyMenuInternal->numActions && sPartyMenuInternal->numActions < 5)
+            AppendToList(sPartyMenuInternal->actions, &sPartyMenuInternal->numActions, j + MENU_FIELD_MOVES);
+        break;
     }
 
     if (!InBattlePike())
@@ -5522,8 +5540,22 @@ enum Move ItemIdToBattleMoveId(enum Item item)
     return (GetItemPocket(item) == POCKET_TM_HM) ? GetItemTMHMMoveId(item) : MOVE_NONE;
 }
 
+static bool8 CanUseFieldMoveWithoutKnowing(struct Pokemon *mon, enum Move move)
+{
+    if (move != MOVE_CUT && move != MOVE_FLY && move != MOVE_SURF
+     && move != MOVE_STRENGTH && move != MOVE_FLASH && move != MOVE_ROCK_SMASH
+     && move != MOVE_WATERFALL && move != MOVE_DIVE)
+        return FALSE;
+    if (GetMonData(mon, MON_DATA_IS_EGG))
+        return FALSE;
+    return CanLearnTeachableMove(GetMonData(mon, MON_DATA_SPECIES), move);
+}
+
 bool8 MonKnowsMove(struct Pokemon *mon, enum Move move)
 {
+    if (CanUseFieldMoveWithoutKnowing(mon, move))
+        return TRUE;
+
     u8 i;
 
     for (i = 0; i < MAX_MON_MOVES; i++)
