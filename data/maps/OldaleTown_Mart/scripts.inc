@@ -8,6 +8,18 @@ OldaleTown_Mart_EventScript_Clerk::
 	goto_if_eq VAR_RESULT, TRUE, OldaleTown_Mart_EventScript_ClerkSkipRing
 	giveitem ITEM_MEGA_RING
 OldaleTown_Mart_EventScript_ClerkSkipRing::
+	checkitem ITEM_Z_POWER_RING
+	goto_if_eq VAR_RESULT, TRUE, OldaleTown_Mart_EventScript_ClerkSkipZ
+	giveitem ITEM_Z_POWER_RING
+OldaleTown_Mart_EventScript_ClerkSkipZ::
+	checkitem ITEM_DYNAMAX_BAND
+	goto_if_eq VAR_RESULT, TRUE, OldaleTown_Mart_EventScript_ClerkSkipDyn
+	giveitem ITEM_DYNAMAX_BAND
+OldaleTown_Mart_EventScript_ClerkSkipDyn::
+	checkitem ITEM_TERA_ORB
+	goto_if_eq VAR_RESULT, TRUE, OldaleTown_Mart_EventScript_ClerkSkipTera
+	giveitem ITEM_TERA_ORB
+OldaleTown_Mart_EventScript_ClerkSkipTera::
 	message gText_HowMayIServeYou
 	waitmessage
 	goto_if_set FLAG_ADVENTURE_STARTED, OldaleTown_Mart_ExpandedItems
@@ -37,46 +49,6 @@ OldaleTown_Mart_Pokemart_Expanded:
 	.2byte ITEM_ANTIDOTE
 	.2byte ITEM_PARALYZE_HEAL
 	.2byte ITEM_AWAKENING
-	.2byte ITEM_VENUSAURITE
-	.2byte ITEM_CHARIZARDITE_X
-	.2byte ITEM_CHARIZARDITE_Y
-	.2byte ITEM_BLASTOISINITE
-	.2byte ITEM_BEEDRILLITE
-	.2byte ITEM_PIDGEOTITE
-	.2byte ITEM_ALAKAZITE
-	.2byte ITEM_SLOWBRONITE
-	.2byte ITEM_GENGARITE
-	.2byte ITEM_KANGASKHANITE
-	.2byte ITEM_PINSIRITE
-	.2byte ITEM_GYARADOSITE
-	.2byte ITEM_AERODACTYLITE
-	.2byte ITEM_MEWTWONITE_X
-	.2byte ITEM_MEWTWONITE_Y
-	.2byte ITEM_AMPHAROSITE
-	.2byte ITEM_STEELIXITE
-	.2byte ITEM_SCIZORITE
-	.2byte ITEM_HERACRONITE
-	.2byte ITEM_HOUNDOOMINITE
-	.2byte ITEM_TYRANITARITE
-	.2byte ITEM_SCEPTILITE
-	.2byte ITEM_BLAZIKENITE
-	.2byte ITEM_SWAMPERTITE
-	.2byte ITEM_GARDEVOIRITE
-	.2byte ITEM_SABLENITE
-	.2byte ITEM_MAWILITE
-	.2byte ITEM_AGGRONITE
-	.2byte ITEM_MEDICHAMITE
-	.2byte ITEM_MANECTITE
-	.2byte ITEM_SHARPEDONITE
-	.2byte ITEM_CAMERUPTITE
-	.2byte ITEM_ALTARIANITE
-	.2byte ITEM_BANETTITE
-	.2byte ITEM_ABSOLITE
-	.2byte ITEM_GLALITITE
-	.2byte ITEM_SALAMENCITE
-	.2byte ITEM_METAGROSSITE
-	.2byte ITEM_LATIASITE
-	.2byte ITEM_LATIOSITE
 	pokemartlistend
 
 OldaleTown_Mart_EventScript_Woman::
